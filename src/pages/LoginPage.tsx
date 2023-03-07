@@ -1,36 +1,30 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { login } from "../utils/auth";
+import { getUserInfo } from "../utils/user";
 
 const LoginPage = () => {
 	const navigate = useNavigate();
-	const [userInputs, setUserInputs] = useState({
-		email: "",
-		password: "",
-	});
+	const [userInfo, setUserInfo] = useState({ name: "" });
 
-	console.log(userInputs);
-
-	const submitHandler = (event: FormEvent<HTMLFormElement>) => {
+	const submitHandler = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
-		if (Object.values(userInputs).some((value) => value === "")) {
-			alert("email과 password를 입력해주세요!");
-			return;
-		}
+		const formData = new FormData(event.currentTarget);
 
-		localStorage.setItem("token", "temporalToken");
-		navigate("/page");
-	};
+		const loginResponse = await login(
+			formData.get("email") as string,
+			formData.get("password") as string
+		);
+		if (!loginResponse) return;
 
-	const changeHandler = (event: ChangeEvent<HTMLInputElement>) => {
-		const {
-			target: { name, value },
-		} = event;
+		const userInfo = await getUserInfo(loginResponse.token);
+		if (!userInfo) return;
 
-		setUserInputs({
-			...userInputs,
-			[name]: value,
-		});
+		setUserInfo(userInfo);
+
+		localStorage.setItem("token", loginResponse.token);
+		userInfo && navigate("/page");
 	};
 
 	return (
@@ -42,25 +36,16 @@ const LoginPage = () => {
 					className="flex flex-col justify-center items-center py-4 gap-3"
 				>
 					<label>이메일</label>
-					<input
-						type="text"
-						className="border 1px"
-						name="email"
-						onBlur={changeHandler}
-					/>
+					<input type="text" className="border 1px" name="email" />
 					<label>비밀 번호</label>
-					<input
-						type="text"
-						className="border 1px"
-						name="password"
-						onBlur={changeHandler}
-					/>
+					<input type="text" className="border 1px" name="password" />
 					<button
 						type="submit"
 						className="bg-buttonColor text-white mt-10 py-2 px-4 rounded-lg"
 					>
 						로그인
 					</button>
+					{JSON.stringify(userInfo)}
 				</form>
 			</div>
 		</div>
