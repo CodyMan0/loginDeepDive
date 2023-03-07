@@ -3,30 +3,39 @@ import {
 	createRoutesFromElements,
 	RouterProvider,
 	Route,
+	RouterProps,
 } from "react-router-dom";
+import Header from "./components/Header";
+import SideBar from "./components/SideBar";
+import Authorization from "./layouts/Authorization";
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./layouts/ProtectedRoute";
-import DetailPage from "./pages/DetailPage";
-import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import NotFound from "./pages/NotFound";
+import { RouterInfo } from "./model/RouterInfo";
 
-const router = createBrowserRouter(
-	createRoutesFromElements(
-		<>
-			<Route path="/" element={<LoginPage />} errorElement={<NotFound />} />
-			<Route path="/" element={<ProtectedRoute />}>
-				<Route path="/page" element={<MainLayout />}>
-					<Route index element={<HomePage />} />
-					<Route path="/page/:id" element={<DetailPage />} />
-				</Route>
-			</Route>
-		</>
-	)
+const ReactRouterObject = createBrowserRouter(
+	RouterInfo.map((routerInfo) => {
+		return routerInfo.withAuthorization
+			? {
+					path: routerInfo.path,
+					element: (
+						<Authorization>
+							<Header />
+							<main className="flex">
+								<SideBar />
+								{routerInfo.element}
+							</main>
+						</Authorization>
+					),
+			  }
+			: {
+					path: routerInfo.path,
+					element: routerInfo.element,
+			  };
+	})
 );
 
 function App() {
-	return <RouterProvider router={router} />;
+	return <RouterProvider router={ReactRouterObject} />;
 }
 
 export default App;
